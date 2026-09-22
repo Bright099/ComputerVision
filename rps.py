@@ -52,7 +52,6 @@ def euclidean_distance(p1, p2):
 def classify_gestures(landmarks):
     wrist = landmarks[0]
 
-
     finger_pairs = [
         (8, 5),
         (12, 9),
@@ -93,6 +92,10 @@ with HandLandmarker.create_from_options(options) as landmarker:
         timestamp = int(time.time() * 1000)
         landmarker.detect_async(mp_image, timestamp)
 
+        # divide the screen view into two
+        mid_x = w // 2
+        cv2.line(frame, (mid_x, 0), (mid_x, h), (255, 255, 255), 2)
+
         # Render hand landmarks
         if latest_result and latest_result.hand_landmarks:
             for hand_landmarks in latest_result.hand_landmarks:
@@ -106,24 +109,42 @@ with HandLandmarker.create_from_options(options) as landmarker:
                 for start_idx, end_idx in FINGER_CONNECTIONS:
                     cv2.line(frame, coords[start_idx], coords[end_idx], (0, 255, 255), 2)
 
-                 # Draw joints: Highlight fingertips in red, other in yellow
+                # Draw joints: Highlight fingertips in red, other in yellow
                 for idx, (px, py) in enumerate(coords):
                     color = (0, 0, 255) if idx in [4, 8, 12, 16, 20] else (0, 255, 0)
                     radius = 5 if idx in [4, 8, 12, 16, 20] else 3
                     cv2.circle(frame, (px, py), radius, color, -1)
-            landmarks = latest_result.hand_landmarks[0]
-            current_gesture = classify_gestures(hand_landmarks)
 
-        
-            cv2.putText(
-                frame,
-                f"Pose: {current_gesture}",
-                (30, 60),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1.2,
-                (255, 255, 255),
-                3
-            )
+                # classify gesture for current hand
+                current_gesture = classify_gestures(hand_landmarks)
+
+                # dividing the hands into left and right sides
+                wrist_x = int(hand_landmarks[0].x * w)
+
+                if wrist_x < mid_x:
+                    side = "Left Side"
+                    # Render left side measurement
+                    cv2.putText(
+                        frame,
+                        f"Left: {current_gesture}",
+                        (30, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1.2,
+                        (255, 255, 255),
+                        3
+                    )
+                else:
+                    side = "Right Side"
+                    # Render right side measurement
+                    cv2.putText(
+                        frame,
+                        f"Right: {current_gesture}",
+                        (mid_x + 30, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1.2,
+                        (255, 255, 255),
+                        3
+                    )
 
         cv2.imshow("Rock, Paper, Scissors detector", frame)
 
