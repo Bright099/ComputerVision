@@ -63,8 +63,8 @@ def classify_gestures(landmarks):
     # Check whether each finger is extended i.e. tip is longer than pip
     fingers_open = []
     for tip_idx, pip_idx in finger_pairs:
-        d_tip = euclidean_distance(wrist, landmarks(tip_idx))
-        d_mcp = euclidean_distance(wrist, landmarks(pip_idx))
+        d_tip = euclidean_distance(wrist, landmarks[tip_idx])
+        d_mcp = euclidean_distance(wrist, landmarks[pip_idx])
         fingers_open.append(d_tip > d_mcp)
 
     if fingers_open == [False, False, False, False]:
@@ -111,8 +111,21 @@ with HandLandmarker.create_from_options(options) as landmarker:
                     color = (0, 0, 255) if idx in [4, 8, 12, 16, 20] else (0, 255, 0)
                     radius = 5 if idx in [4, 8, 12, 16, 20] else 3
                     cv2.circle(frame, (px, py), radius, color, -1)
+            landmarks = latest_result.hand_landmarks[0]
+            current_gesture = classify_gestures(hand_landmarks)
 
-        cv2.imshow("Finger Landmark Tracking", frame)
+        
+            cv2.putText(
+                frame,
+                f"Pose: {current_gesture}",
+                (30, 60),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1.2,
+                (255, 255, 255),
+                3
+            )
+
+        cv2.imshow("Rock, Paper, Scissors detector", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
