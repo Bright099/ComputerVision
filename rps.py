@@ -45,6 +45,38 @@ FINGER_CONNECTIONS = [
 
 cap = cv2.VideoCapture(0)
 
+def euclidean_distance(p1, p2):
+    return math.hypot(p1.x - p2.x, p1.y - p2.y)
+
+
+def classify_gestures(landmarks):
+    wrist = landmarks[0]
+
+
+    finger_pairs = [
+        (8, 5),
+        (12, 9),
+        (16, 13),
+        (20, 17)
+    ]
+
+    # Check whether each finger is extended i.e. tip is longer than pip
+    fingers_open = []
+    for tip_idx, pip_idx in finger_pairs:
+        d_tip = euclidean_distance(wrist, landmarks(tip_idx))
+        d_mcp = euclidean_distance(wrist, landmarks(pip_idx))
+        fingers_open.append(d_tip > d_mcp)
+
+    if fingers_open == [False, False, False, False]:
+        return "Rock"
+    elif fingers_open == [True, True, True, True]:
+        return "Paper"
+    elif fingers_open == [True, True, False, False]:
+        return "Scissors"
+    else:
+        return "Unknown"
+
+
 with HandLandmarker.create_from_options(options) as landmarker:
     while cap.isOpened():
         success, frame = cap.read()
@@ -84,6 +116,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
 
 cap.release()
 cv2.destroyAllWindows()
